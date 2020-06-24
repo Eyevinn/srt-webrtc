@@ -1,0 +1,22 @@
+{
+  "name": "@eyevinn/srt-webrtc",
+  "version": "0.1.0",
+  "description": "SRT to WebRTC server",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@eyevinn/srt": "^0.2.0",
+    "debug": "^4.1.1",
+    "fastify": "^2.15.0",
+    "fastify-cors": "^3.0.3",
+    "fastify-swagger": "^2.6.0",
+    "make-promises-safe": "^5.1.0",
+    "stream-chunker": "^1.2.8",
+    "uuid": "^8.1.0",
+    "wrtc": "^0.4.5"
+  }
+}
