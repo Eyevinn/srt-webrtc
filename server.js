@@ -1,52 +1,27 @@
 require('make-promises-safe') // installs an 'unhandledRejection' handler
-const { RTCAudioSource, RTCVideoSource } = require('wrtc').nonstandard;
-const { SRTReadStream } = require('@eyevinn/srt');
-const chunker = require('stream-chunker');
 
 const WebRTCConnectionManager = require('./src/webrtc/connection_manager.js');
-const ConnectionWritable = require('./src/webrtc/connection_writable.js');
+const MediaSource = require('./src/media_source.js');
 
-let audioTrack;
-let videoTrack;
-let writeStream;
-let audioSource;
-let videoSource;
+const DEFAULT_WIDTH = 320;
+const DEFAULT_HEIGHT = 180;
 
-const WIDTH = 320;
-const HEIGHT = 180;
+const mediaSource = new MediaSource({ host: "0.0.0.0", port: 1234, width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT });
 
 const connectionManager = new WebRTCConnectionManager({ port: 3000 });
 connectionManager.register('beforeoffer', (peerConnection, next) => {
-  audioSource = new RTCAudioSource();
-  videoSource = new RTCVideoSource();
-  audioTrack = audioSource.createTrack();
-  videoTrack = videoSource.createTrack();
-
-  peerConnection.addTrack(audioTrack);
-  peerConnection.addTrack(videoTrack);
+  console.log("Adding media tracks");
+  peerConnection.addTrack(mediaSource.getAudioTrack());
+  peerConnection.addTrack(mediaSource.getVideoTrack());
   next();
 });
 
 connectionManager.on('connect', connection => {
-  const srt = new SRTReadStream("0.0.0.0", 1234);
-  console.log("Waiting for SRT client to be connected");
-  srt.listen(readStream => {
-    const frameChunker = chunker(WIDTH * HEIGHT * 1.5);
-    frameChunker.on('data', data => {
-      videoSource.onFrame({
-        width: WIDTH,
-        height: HEIGHT,
-        data: new Uint8ClampedArray(data)
-      });
-  
-    });
-    readStream.pipe(frameChunker);
-  });  
+  console.log("Client connected");  
 });
 connectionManager.on('close', () => {
-  audioTrack.stop();
-  videoTrack.stop();
+  console.log("Client closed connection");
 });
 
-
+mediaSource.listen();
 connectionManager.listen();
