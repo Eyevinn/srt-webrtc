@@ -1,6 +1,11 @@
 const { RTCAudioSource, RTCVideoSource } = require('wrtc').nonstandard;
 const { SRTReadStream } = require('@eyevinn/srt');
-const chunker = require('stream-chunker');
+const { H264Decoder } = require('h264decoder');
+const debug = require('debug')('media-source');
+
+const NaluChunker = require('./nalu-chunker.js');
+
+// ffmpeg -re -i /mnt/F1/F1\ CAN\ APR10.MOV -vcodec copy -an -f h264 srt://host.docker.internal:1234
 
 class MediaSource {
   constructor({ host, port, width, height }) {
@@ -19,15 +24,21 @@ class MediaSource {
     const srt = new SRTReadStream(this.host, this.port);
     console.log("Waiting for SRT source to be connected");
     srt.listen(readStream => {
-      const frameChunker = chunker(this.width * this.height * 1.5);
-      frameChunker.on('data', data => {
-        this.videoSource.onFrame({
-          width: this.width,
-          height: this.height,
-          data: new Uint8ClampedArray(data)
-        });    
+      const decoder = new H264Decoder();
+      const naluChunker = new NaluChunker();
+      naluChunker.on('nalu', nalu => {
+        debug(`Got NAL unit ${nalu.byteLength}, decoding`);
+        const ret = decoder.decode(nalu);
+        if (ret === H264Decoder.PIC_RDY) {
+          debug("Got frame");
+          this.videoSource.onFrame({
+            width: decoder.width,
+            height: decoder.height,
+            data: decoder.pic
+          });
+        }
       });
-      readStream.pipe(frameChunker);
+      readStream.pipe(naluChunker);
     });
   }
 
