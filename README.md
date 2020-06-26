@@ -9,3 +9,4 @@ node server.js
 
 Accepts SRT connections on port `1234`
 
+![](srt2webrtc_detailed.png)
