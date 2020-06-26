@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@eyevinn/nalu-chunker": "^0.1.0",
     "@eyevinn/srt": "^0.2.0",
     "debug": "^4.1.1",
     "fastify": "^2.15.0",

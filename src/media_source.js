@@ -1,9 +1,9 @@
 const { RTCAudioSource, RTCVideoSource } = require('wrtc').nonstandard;
 const { SRTReadStream } = require('@eyevinn/srt');
 const { H264Decoder } = require('h264decoder');
+const NaluChunker = require('@eyevinn/nalu-chunker');
 const debug = require('debug')('media-source');
 
-const NaluChunker = require('./nalu-chunker.js');
 
 // ffmpeg -re -i /mnt/F1/F1\ CAN\ APR10.MOV -vcodec copy -an -f h264 srt://host.docker.internal:1234
 
