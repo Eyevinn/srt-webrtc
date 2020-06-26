@@ -27,14 +27,15 @@ class MediaSource {
       const decoder = new H264Decoder();
       const naluChunker = new NaluChunker();
       naluChunker.on('nalu', nalu => {
-        debug(`Got NAL unit ${nalu.byteLength}, decoding`);
-        const ret = decoder.decode(nalu);
+        //debug(`Got NAL unit of size ${nalu.data.byteLength}, decoding ${nalu.type}`);
+        const ret = decoder.decode(nalu.data);
+        //debug(`H264 Decoder returned ${ret}`);
         if (ret === H264Decoder.PIC_RDY) {
-          debug("Got frame");
+          debug(`Got frame ${decoder.width}x${decoder.height}`);
           this.videoSource.onFrame({
             width: decoder.width,
             height: decoder.height,
-            data: decoder.pic
+            data: decoder.pic.slice(0, decoder.width * decoder.height * 1.5)
           });
         }
       });

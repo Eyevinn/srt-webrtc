@@ -39,12 +39,41 @@ const NAL_UNIT_TYPE = {
   29: "Unspecified",
 };
 
+function rbsp(data) {
+  const len = data.byteLength;
+  let pos = 0;
+  let epbs = [];
+
+  while (pos < (len - 2)) {
+    if (data[pos] == 0 && data[pos+1] == 0 && data[pos+2] == 0x03) {
+      epbs.push(pos + 2);
+      pos += 2;
+    } else {
+      pos++;
+    }
+  }
+  let rbsp = new Uint8Array(len - epbs.length);
+
+  // Remove the EPBs
+  pos = 0;
+  for (let i = 0; i < rbsp.length; i++) {
+    if (pos === epbs[0]) {
+      pos++;
+      epbs.shift();
+    }
+    rbsp[i] = data[pos];
+    pos++;
+  }
+  return rbsp;
+}
+
 class NaluChunker extends Transform {
   constructor() {
     super();
     this.remainder = Buffer.alloc(0, 0);
     this.unitStartPos = -1;
     this.state =  BYTE_STATE["0-7"];
+    this.unitType;
   }
 
   _transform(data, encoding, next) {
@@ -55,7 +84,6 @@ class NaluChunker extends Transform {
     //debug(`New chunk (${this.remainder.length}, ${data.length})`);
 
     let byte;
-    let unitType;
     while(pos < len) {
       byte = allData[pos++];
       if (this.state === BYTE_STATE["0-7"]) {
@@ -72,11 +100,15 @@ class NaluChunker extends Transform {
         } else if (byte === NAL_START_PREFIX) {
           debug(`Start Prefix at ${pos} unitStartPos=${this.unitStartPos}`);
           if (this.unitStartPos >= 0) {
-            debug(`NAL unit ${NAL_UNIT_TYPE[unitType]} starting at ${this.unitStartPos} and ends at ${pos - this.state - 1}`);
-            const nalu = allData.slice(this.unitStartPos, pos - this.state - 1);
-            this.emit('nalu', new Uint8Array(nalu));
+            debug(`NAL unit ${NAL_UNIT_TYPE[this.unitType]} starting at ${this.unitStartPos} and ends at ${pos - this.state - 1}`);
+            const nalu = new Uint8Array(allData.slice(this.unitStartPos, pos - this.state - 1));
+            this.emit('nalu', {
+              data: nalu,
+              type: NAL_UNIT_TYPE[this.unitType],
+              rbsp: rbsp(nalu)
+            });
           }
-          unitType = allData[pos] & 0x1f;
+          this.unitType = allData[pos] & 0x1f;
           this.unitStartPos = pos;
         } else {
           this.state = BYTE_STATE["0-7"];
