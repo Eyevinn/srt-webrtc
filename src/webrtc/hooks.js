@@ -9,7 +9,6 @@ SUPPORTED_HOOKS.map(name => {
 
 
 function hookIterator(fn, peerConnection, next) {
-  console.log("calling", fn);
   return fn(peerConnection, next);
 }
 
