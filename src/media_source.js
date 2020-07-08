@@ -2,11 +2,8 @@ const { RTCAudioSource, RTCVideoSource } = require('wrtc').nonstandard;
 const { SRTReadStream } = require('@eyevinn/srt');
 const { H264Decoder } = require('h264decoder');
 const NaluChunker = require('@eyevinn/nalu-chunker');
+const { TSDemuxer } = require('@eyevinn/tsdemux');
 const debug = require('debug')('media-source');
-
-const { TSDemuxer } = require('./ts_demuxer.js');
-
-// ffmpeg -re -i /mnt/F1/F1\ CAN\ APR10.MOV -vcodec copy -an -f h264 srt://host.docker.internal:1234
 
 class MediaSource {
   constructor({ host, port, width, height }) {
@@ -25,6 +22,7 @@ class MediaSource {
     const srt = new SRTReadStream(this.host, this.port);
     console.log("Waiting for SRT source to be connected");
     srt.listen(readStream => {
+      console.log("SRT source connected");
       const decoder = new H264Decoder();
       const naluChunker = new NaluChunker();
       naluChunker.on('nalu', nalu => {
@@ -42,8 +40,9 @@ class MediaSource {
         }
       });
       const demuxedStreams = { video: naluChunker };
-      const tsdemuxer = new TSDemuxer(demuxedStreams);      
+      const tsdemuxer = new TSDemuxer(demuxedStreams);
       readStream.pipe(tsdemuxer);
+      console.log("reading data");
     });
   }
 
