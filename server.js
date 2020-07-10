@@ -1,6 +1,6 @@
 require('make-promises-safe') // installs an 'unhandledRejection' handler
 
-const WebRTCConnectionManager = require('./src/webrtc/connection_manager.js');
+const { WebRTCConnectionManager } = require('@eyevinn/webrtc');
 const MediaSource = require('./src/media_source.js');
 
 const DEFAULT_WIDTH = 320;
